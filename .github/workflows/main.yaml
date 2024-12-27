@@ -9,14 +9,16 @@ on:
 env:
   AWS_REGION: ap-southeast-2
   AWS_ACCOUNT_ID: 692859929663
-  AWS_IAM_ROLE: arn:aws:iam::692859929663:role/cicd-github-actions
-  ECR_REPOSITORY: default
+  ECR_REPOSITORY: app/student-ui
   CONTAINER_NAME: student-ui
 
 jobs:
 
   build:
     runs-on: ubuntu-latest
+    env:
+      AWS_IAM_ROLE: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/cicd-github-actions
+      ECR_REGISTRY: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
     permissions:
       id-token: write
       contents: read
@@ -37,7 +39,6 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build a docker container and
@@ -50,12 +51,14 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
+    env:
+      ECR_IMAGE: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
     steps:
       - name: Pull image from Amazon ECR
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-          docker pull ${{ steps.build-image.outputs.image }}
+          docker pull ${{ env.ECR_IMAGE }}
       - name: Run docker container
         run: |
-          docker rm -f student-ui
-          docker run -d -p 3000:3000 --name student-ui ${{ steps.build-image.outputs.image }}
+          docker rm -f ${{ env.CONTAINER_NAME }}
+          docker run -d -p 3000:3000 --name ${{ env.CONTAINER_NAME }} ${{ env.ECR_IMAGE }}
