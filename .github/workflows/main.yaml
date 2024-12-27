@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - dalton/fix-workflow
 
 env:
   AWS_REGION: ap-southeast-2
@@ -49,15 +50,12 @@ jobs:
   deploy:
     needs: build
     runs-on: self-hosted
-    env: 
-      AWS_REGION: ${{ env.AWS_REGION }}
-      AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
     steps:
       - name: Pull image from Amazon ECR
         run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
           docker pull ${{ steps.build-image.outputs.image }}
       - name: Run docker container
         run: |
           docker rm -f student-ui
-          docker run -d -p 3000:3000 --name student-ui integrationninjas/nextjs-app
+          docker run -d -p 3000:3000 --name student-ui ${{ steps.build-image.outputs.image }}
