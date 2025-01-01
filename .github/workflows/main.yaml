@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - dalton/fix-workflow
 
 env:
   AWS_REGION: ap-southeast-2
@@ -58,5 +57,5 @@ jobs:
           docker pull ${{ env.ECR_IMAGE }}:${{ github.sha }}
       - name: Run docker container
         run: |
-          docker rm -f ${{ env.CONTAINER_NAME }}
+          docker rm -f ${{ env.CONTAINER_NAME }} || true
           docker run -d -p 3000:3000 --name ${{ env.CONTAINER_NAME }} ${{ env.ECR_IMAGE }}:${{ github.sha }}
