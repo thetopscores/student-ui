@@ -1,6 +1,6 @@
 ## Getting Started
 
-1. In the Clerk Dashboard, navigate to the API keys page, copy your Clerk Publishable and Secret Keys. Paste your keys into your .env.local file.
+1. In the Clerk Dashboard, navigate to the API keys page, copy your Clerk Publishable and Secret Keys. create a `.env.local` file at the project root and paste your keys into your .env.local file.
 2. Run `npm install`
 3. npm `run dev`
 
